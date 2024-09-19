@@ -10,8 +10,24 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
 $sql = "SELECT * FROM users";
 $result = $conn->query($sql);
-?>
 
+if (isset($_GET['delete'])) {
+    $id = intval($_GET['delete']);  // Sanitize the ID
+
+    // Execute the DELETE query
+    $sql = "DELETE FROM users WHERE id = $id";
+    if ($conn->query($sql) === TRUE) {
+        echo "User deleted successfully!";
+    } else {
+        echo "Error deleting record: " . $conn->error;
+    }
+
+    // Redirect back to the dashboard after deletion
+    header("Location: dashboard.php");
+    exit();
+}
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -61,6 +77,7 @@ $result = $conn->query($sql);
                         <table class="table">
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Firstname</th>
                                     <th>Lastname</th>
                                     <th>Email</th>
@@ -68,17 +85,17 @@ $result = $conn->query($sql);
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($row = $result->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?php echo $row['firstname']; ?></td>
-                                        <td><?php echo $row['lastname']; ?></td>
-                                        <td><?php echo $row['email']; ?></td>
-                                        <td>
-                                            <a class='btn btn-primary'>Edit</a>
-                                            <a class='btn btn-danger'>Delete</a>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
+                                <?php
+                                while ($row = mysqli_fetch_assoc($result)) {
+                                    echo "<tr>
+                                    <td>" . $row['id'] . "</td>
+                                    <td>" . $row['firstname'] . "</td>
+                                    <td>" . $row['lastname'] . "</td>
+                                    <td>" . $row['email'] . "</td>
+                                    <td> <button class='edit btn btn-primary' id=" . $row['id'] . ">Edit</button> <button class='delete btn btn-danger' id=del_btn" . $row['id'] . ">Delete</button>  </td>
+                                  </tr>";
+                                }
+                                ?>
                             </tbody>
 
                         </table>
@@ -87,9 +104,61 @@ $result = $conn->query($sql);
             </div>
         </div>
     </div>
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this user?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="confirmDelete" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Delete Modal End -->
 
+    <script>
+        edits = document.getElementsByClassName('edit');
+        Array.from(edits).forEach((element) => {
+            element.addEventListener("click", (e) => {
+                tr = e.target.parentNode.parentNode;
+                id = tr.getElementsByTagName("td")[0].innerText;
+                firstname = tr.getElementsByTagName("td")[1].innerText;
+                lastname = tr.getElementsByTagName("td")[2].innerText;
+                email = tr.getElementsByTagName("td")[3].innerText;
+                console.table(id, firstname, lastname, email);
 
+                window.location.href = `edit_user.php?id=${id}&firstname=${firstname}&lastname=${lastname}&email=${email}`;
+            })
+        });
+
+        let userIdToDelete; // Store the ID of the user we want to delete
+
+        deletes = document.getElementsByClassName('delete');
+        Array.from(deletes).forEach((element) => {
+            element.addEventListener("click", (e) => {
+                // Get the user ID from the button
+                userIdToDelete = e.target.id.substr(7);
+                // Show the Bootstrap modal
+                var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                deleteModal.show();
+            });
+        });
+
+        document.getElementById('confirmDelete').addEventListener("click", () => {
+            if (userIdToDelete) {
+                window.location = `dashboard.php?delete=${userIdToDelete}`;
+            }
+        });
+    </script>
 
 </body>
 
