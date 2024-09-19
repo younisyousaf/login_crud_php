@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'db.php';
 
 // Check if the user is already logged in and prevent redirect loop
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
@@ -7,19 +8,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
   exit();
 }
 
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "login_crud";
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
+//inlcude db.php
 
 // Initialize error message
 $error_message = "";
