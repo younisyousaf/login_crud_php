@@ -1,29 +1,41 @@
 <?php
 session_start();
 include 'db.php';
-// Initialize variables
-$id = $firstname = $lastname = $email = '';
 
-// Check if data is coming through the GET request
-if (isset($_GET['id']) && isset($_GET['firstname']) && isset($_GET['lastname']) && isset($_GET['email'])) {
-    // Sanitize the inputs from the GET request
-    $id = htmlspecialchars($_GET['id']);
-    $firstname = htmlspecialchars($_GET['firstname']);
-    $lastname = htmlspecialchars($_GET['lastname']);
-    $email = htmlspecialchars($_GET['email']);
-}
-// Prepare and execute the update statement
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if (isset($_POST['id'])) {
     $id = $_POST['id'];
     $firstname = $_POST['firstname'];
     $lastname = $_POST['lastname'];
     $email = $_POST['email'];
 
-    $stmt = $conn->prepare("UPDATE `users` SET `firstname` = ?, `lastname` = ?, `email` = ? WHERE `id` = ?");
+    // Use prepared statements to prevent SQL injection
+    $stmt = $conn->prepare("UPDATE users SET firstname=?, lastname=?, email=? WHERE id=?");
     $stmt->bind_param("sssi", $firstname, $lastname, $email, $id);
     $stmt->execute();
+
     header("Location: dashboard.php");
-    exit();
+
+    $stmt->close();
+}
+
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+
+    // Use prepared statements for the SELECT query
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $id = $row['id'];
+        $firstname = $row['firstname'];
+        $lastname = $row['lastname'];
+        $email = $row['email'];
+    }
+
+    $stmt->close();
 }
 
 ?>
@@ -36,14 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <title>Edit User</title>
+    <title>Update User</title>
 </head>
 
 <body>
     <!-- Logout Button -->
     <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Edit User</a>
+            <a class="navbar-brand" href="#">Update User</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -64,22 +76,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
-                        <h4>Edit User</h4>
+                        <h4>Update User</h4>
                     </div>
                     <div class="card-body">
-                        <form action="edit_user.php" method="post" id="myForm">
+                        <form action="" method="post" id="myForm">
                             <input type="hidden" name="id" value="<?php echo $id; ?>">
                             <div class="form-group">
                                 <label for="firstname">Firstname</label>
-                                <input type="text" class="form-control" id="firstname" name="firstname" value="<?php echo htmlspecialchars($firstname); ?>" required>
+                                <input type="text" class="form-control" id="firstname" name="firstname" value="<?php echo $firstname ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="lastname">Lastname</label>
-                                <input type="text" class="form-control" id="lastname" name="lastname" value="<?php echo htmlspecialchars($lastname); ?>" required>
+                                <input type="text" class="form-control" id="lastname" name="lastname" value="<?php echo $lastname ?>" required>
                             </div>
                             <div class="form-group mb-2">
                                 <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
+                                <input type="email" class="form-control" id="email" name="email" value="<?php echo $email ?>" required>
                             </div>
                             <button type="submit" class="btn btn-primary">Update</button>
                         </form>

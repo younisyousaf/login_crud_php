@@ -11,16 +11,11 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 $sql = "SELECT * FROM users";
 $result = $conn->query($sql);
 
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);  // Sanitize the ID
-
-    // Execute the DELETE query
-    $sql = "DELETE FROM users WHERE id = $id";
-    if ($conn->query($sql) === TRUE) {
-        echo "User deleted successfully!";
-    } else {
-        echo "Error deleting record: " . $conn->error;
-    }
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
 
     // Redirect back to the dashboard after deletion
     header("Location: dashboard.php");
@@ -87,13 +82,19 @@ if (isset($_GET['delete'])) {
                             <tbody>
                                 <?php
                                 while ($row = mysqli_fetch_assoc($result)) {
-                                    echo "<tr>
-                                    <td>" . $row['id'] . "</td>
-                                    <td>" . $row['firstname'] . "</td>
-                                    <td>" . $row['lastname'] . "</td>
-                                    <td>" . $row['email'] . "</td>
-                                    <td> <button class='edit btn btn-primary' id=" . $row['id'] . ">Edit</button> <button class='delete btn btn-danger' id=del_btn" . $row['id'] . ">Delete</button>  </td>
-                                  </tr>";
+
+                                ?>
+                                    <tr>
+                                        <td><?php echo $row['id']; ?></td>
+                                        <td><?php echo $row['firstname']; ?></td>
+                                        <td><?php echo $row['lastname']; ?></td>
+                                        <td><?php echo $row['email']; ?></td>
+                                        <td><a class="btn btn-primary" href="edit_user.php?id=<?php echo $row['id']; ?>">Edit</a>
+                                            &nbsp;
+                                            <a class="btn btn-danger" href="dashboard.php?id=<?php echo $row['id']; ?>">Delete</a>
+                                        </td>
+                                    </tr>
+                                <?php
                                 }
                                 ?>
                             </tbody>
@@ -125,7 +126,7 @@ if (isset($_GET['delete'])) {
 
     <!-- Delete Modal End -->
 
-    <script>
+    <!-- <script>
         edits = document.getElementsByClassName('edit');
         Array.from(edits).forEach((element) => {
             element.addEventListener("click", (e) => {
@@ -158,7 +159,7 @@ if (isset($_GET['delete'])) {
                 window.location = `dashboard.php?delete=${userIdToDelete}`;
             }
         });
-    </script>
+    </script> -->
 
 </body>
 
